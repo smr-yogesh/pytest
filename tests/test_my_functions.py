@@ -26,7 +26,7 @@ def test_very_slow():
 
 
 @pytest.mark.skip(reason="this feature is currently broken")
-def test_add():
+def test_add_2():
     assert function.add(1, 2) == 3
 
 
