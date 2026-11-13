@@ -1,6 +1,7 @@
 import pytest
 import source.Vault as v
 import logging
+import unittest.mock as mock
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,30 @@ def test_requires_master_vault_clearance(cursed_item, magical_vault):
 # get_audit_trail
 def test_get_audit_trail(magical_vault, my_item, cursed_item):
     v.MagicalVault.deposit_item(magical_vault, my_item, 3)
-    v.MagicalVault.deposit_item(magical_vault, cursed_item, 4)
-    v.MagicalVault.check_out_item(magical_vault, my_item.item_id, "jack", 3)
     v.MagicalVault.get_audit_trail(magical_vault)
-    print(v.MagicalVault.get_audit_trail(magical_vault))
+    assert v.MagicalVault.get_audit_trail(magical_vault) == ["DEPOSIT: gold (1)"]
+
+
+@mock.patch("requests.post")
+def test_mock_request_cursed(mock_post, magical_vault, cursed_item):
+
+    mock_post.return_value.status_code = 200
+
+    # 2. Run the methods under test (with "jack" as a string)
+    v.MagicalVault.deposit_item(magical_vault, cursed_item, 3)
+    v.MagicalVault.check_out_item(magical_vault, cursed_item.item_id, "jack", 3)
+
+    mock_post.assert_called_once()
+
+
+@mock.patch("requests.post")
+def test_mock_request_not_cursed(mock_post, magical_vault, my_item):
+
+    mock_post.return_value.status_code = 200
+
+    # 2. Run the methods under test (with "jack" as a string)
+    v.MagicalVault.deposit_item(magical_vault, my_item, 3)
+    v.MagicalVault.check_out_item(magical_vault, my_item.item_id, "jack", 3)
+
+    with pytest.raises(AssertionError):
+        mock_post.assert_called_once()
